@@ -1,0 +1,36 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "type": "object",
+    "properties": {
+      "auctionId": {
+        "type": "integer",
+        "description": "Auction ID."
+      },
+      "item": {
+        "type": "object",
+        "properties": {
+        }
+      },
+      "startTime": {
+        "type": "string",
+        "format": "date-time",
+        "description": "Auction start time."
+      },
+      "endTime": {
+        "type": "string",
+        "format": "date-time",
+        "description": "Auction end time."
+      },
+      "bids": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+          }
+        },
+        "description": "List of bids."
+      }
+    },
+    "required": ["auctionId", "item", "startTime", "endTime", "bids"]
+  }
+  
