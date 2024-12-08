@@ -7,6 +7,9 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+//Fjern eksisterende udbydere og tilføj ConsoleLogger
+builder.Logging.ClearProviders().AddConsole(); 
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
