@@ -1,4 +1,4 @@
-name: Byg et Docker Image
+name: Docker Image
 on:
   push:
     branches: [ "main" ]
