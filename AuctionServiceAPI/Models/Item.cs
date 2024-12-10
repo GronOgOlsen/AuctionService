@@ -1,21 +1,15 @@
-using MongoDB.Bson.Serialization.Attributes;
-using AuctionServiceAPI.Models;
+﻿using MongoDB.Bson.Serialization.Attributes;
 
 namespace AuctionServiceAPI.Models
 {
     public class Item
-    {
-        [BsonId]
-        public Guid _id { get; set; }
-
-        public User? user { get; set; }  // Markeres som nullable
-        public float bidPrice { get; set; }
-        public Guid auctionId { get; set; }
-        public DateTime? dateTime { get; set; } = DateTime.Now;
-
-        public Item(User? user = null)
-        {
-            this.user = user;
-        }
+    {    
+    [BsonId]
+     public  Guid _id { get; set; }
+     public string title { get; set; }
+    public string description { get; set; }
+    public string category { get; set; }
+    public  float startingPrice { get; set; }
+    public  string status { get; set; }
     }
 }

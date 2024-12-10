@@ -1,5 +1,4 @@
-using MongoDB.Bson.Serialization.Attributes;
-using AuctionServiceAPI.Models;
+﻿using MongoDB.Bson.Serialization.Attributes;
 
 namespace AuctionServiceAPI.Models
 {
@@ -7,15 +6,9 @@ namespace AuctionServiceAPI.Models
     {
         [BsonId]
         public Guid _id { get; set; }
-
-        public User? user { get; set; }  // Markeres som nullable
+        public User user { get; set; }
         public float bidPrice { get; set; }
         public Guid auctionId { get; set; }
         public DateTime? dateTime { get; set; } = DateTime.Now;
-
-        public Bid(User? user = null)
-        {
-            this.user = user;
-        }
     }
 }

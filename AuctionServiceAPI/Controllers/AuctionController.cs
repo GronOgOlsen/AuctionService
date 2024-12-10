@@ -1,10 +1,14 @@
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using AuctionServiceAPI.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Threading.Tasks;
+using AuctionServiceAPI.Service;
+using Microsoft.AspNetCore.Authorization;
+
 
 namespace AuctionServiceAPI.Controllers
 {
@@ -12,95 +16,105 @@ namespace AuctionServiceAPI.Controllers
     [Route("api/[controller]")]
     public class AuctionController : ControllerBase
     {
+        private readonly IAuctionService _auctionService;
         private readonly ILogger<AuctionController> _logger;
 
-        public AuctionController(ILogger<AuctionController> logger)
+        public AuctionController(IAuctionService auctionService, ILogger<AuctionController> logger)
         {
+            _auctionService = auctionService;
             _logger = logger;
         }
 
-        // CRUD: Oprette en auktion
-        [HttpPost]
-        public async Task<ActionResult<Auction>> CreateAuction(Auction auction)
+        private string GetIpAddress()
         {
-            try
-            {
-                // Simulere oprettelse i database (skal erstattes med rigtig MongoDB-lagring)
-                _logger.LogInformation("Creating new auction");
-                auction._id = Guid.NewGuid();
-                // Returnere oprettet auktion
-                return CreatedAtAction(nameof(GetAuctionById), new { id = auction._id }, auction);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex.Message, "Error creating auction");
-                return StatusCode(500, "Internal server error");
-            }
+            var hostName = Dns.GetHostName();
+            var ips = Dns.GetHostAddresses(hostName);
+            var ipaddr = ips.First().MapToIPv4().ToString();
+            return ipaddr;
         }
 
-        // CRUD: Hent auktion via ID
-        [HttpGet("{id}")]
-        public ActionResult<Auction> GetAuctionById(Guid id)
+        [HttpGet("{_id}")]
+        [Authorize(Roles = "1,2")]
+        public async Task<ActionResult<Auction>> GetAuction(Guid _id)
         {
-            // Simulere hentning fra database (skal erstattes med MongoDB hentning)
-            var auction = new Auction { _id = id, startTime = DateTime.Now, endTime = DateTime.Now.AddHours(1) };
+            _logger.LogInformation(1, $"Auction service responding from {GetIpAddress()}");
+
+            var auction = await _auctionService.GetAuction(_id);
             if (auction == null)
             {
                 return NotFound();
             }
-            return Ok(auction);
+            return auction;
         }
 
-        // CRUD: Hent alle auktioner
         [HttpGet]
-        public ActionResult<List<Auction>> GetAllAuctions()
+        [Authorize(Roles = "1,2")]
+        public async Task<ActionResult<IEnumerable<Auction>>> GetAuctionList()
         {
-            // Simulere hentning af alle auktioner (skal erstattes med MongoDB hentning)
-            var auctions = new List<Auction>
+            _logger.LogInformation(1, $"Auction service responding from {GetIpAddress()}");
+
+            var auctionList = await _auctionService.GetAuctionList();
+
+            if (auctionList == null)
             {
-                new Auction { _id = Guid.NewGuid(), startTime = DateTime.Now, endTime = DateTime.Now.AddHours(1) },
-                new Auction { _id = Guid.NewGuid(), startTime = DateTime.Now.AddHours(2), endTime = DateTime.Now.AddHours(3) }
-            };
-            return Ok(auctions);
+                throw new ApplicationException("Auction list is null");
+            }
+            return Ok(auctionList);
         }
 
-        // CRUD: Opdater auktion
-        [HttpPut("{id}")]
-        public ActionResult UpdateAuction(Guid id, Auction auction)
+        [HttpPost]
+        [Authorize(Roles = "2")]
+        public async Task<ActionResult<int>> AddAuction(Auction auction)
         {
             try
             {
-                // Simulere opdatering i database (skal erstattes med MongoDB opdatering)
-                if (auction._id != id)
-                {
-                    return BadRequest("Auction ID mismatch");
-                }
+                _logger.LogInformation($"Received request to add auction: {auction._id}");
+                _logger.LogInformation(1, $"Auction service responding from {GetIpAddress()}");
 
-                _logger.LogInformation($"Updating auction with ID: {id}");
-                return NoContent(); // Returnere 204 No Content for succesfuld opdatering
+                var auctionId = await _auctionService.AddAuction(auction);
+                return Ok($"Auction with id {auctionId}, was added successfully.");
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex.Message, "Error updating auction");
-                return StatusCode(500, "Internal server error");
+                _logger.LogError(ex.Message, "An error occurred while adding an auction.");
+                return StatusCode(500, "An error occurred while processing your request.");
             }
         }
 
-        // CRUD: Slet auktion
-        [HttpDelete("{id}")]
-        public ActionResult DeleteAuction(Guid id)
+
+        [HttpPut("{_id}")]
+        [Authorize(Roles = "2")]
+        public async Task<IActionResult> UpdateAuction(Guid _id, Auction auction)
         {
-            try
+            _logger.LogInformation(1, $"auction Service responding from {GetIpAddress()}");
+
+            if (_id != auction._id)
             {
-                // Simulere sletning fra database (skal erstattes med MongoDB sletning)
-                _logger.LogInformation($"Deleting auction with ID: {id}");
-                return NoContent(); // Returnere 204 No Content for succesfuld sletning
+                return BadRequest("Bad request, ids not matching");
             }
-            catch (Exception ex)
+
+            var result = await _auctionService.UpdateAuction(auction);
+            if (result == 0)
             {
-                _logger.LogError(ex.Message, "Error deleting auction");
-                return StatusCode(500, "Internal server error");
+                return NotFound("Auction not found");
             }
+
+            return Ok($"Auction with id {_id} updated successfully");
+        }
+
+        [HttpDelete("{_id}")]
+        [Authorize(Roles = "2")]
+        public async Task<IActionResult> DeleteAuction(Guid _id)
+        {
+            _logger.LogInformation(1, $"auction service responding from {GetIpAddress()}");
+
+            var result = await _auctionService.DeleteAuction(_id);
+            if (result == 0)
+            {
+                return NotFound();
+            }
+
+            return Ok($"Auction with id {_id} deleted successfully");
         }
     }
 }
