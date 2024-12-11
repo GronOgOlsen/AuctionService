@@ -2,9 +2,6 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using AuctionServiceAPI.Controllers;
-using AuctionServiceAPI.Models;
-using AuctionServiceAPI.Service;
 using System.Text;
 using VaultSharp;
 using VaultSharp.V1.AuthMethods.Token;
@@ -16,7 +13,10 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using NLog;
 using NLog.Web;
-using AuctionServiceAPI;
+using AuctionServiceAPI.Data;
+using AuctionServiceAPI.Controllers;
+using AuctionServiceAPI.Models;
+using AuctionServiceAPI.Services;
 
 var logger = NLog.LogManager.Setup().LoadConfigurationFromAppSettings()
     .GetCurrentClassLogger();

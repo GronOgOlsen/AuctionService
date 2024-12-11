@@ -3,7 +3,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Configuration;
 
 
-namespace AuctionServiceAPI.Service
+namespace AuctionServiceAPI.Data
 {
     public class MongoDBContext
     {

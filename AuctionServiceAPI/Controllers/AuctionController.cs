@@ -6,7 +6,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
-using AuctionServiceAPI.Service;
+using AuctionServiceAPI.Services;
 using Microsoft.AspNetCore.Authorization;
 
 

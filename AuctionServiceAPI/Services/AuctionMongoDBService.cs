@@ -5,9 +5,10 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using AuctionServiceAPI.Models;
-using AuctionServiceAPI.Service;
+using AuctionServiceAPI.Services;
+using AuctionServiceAPI.Data;
 
-namespace AuctionServiceAPI.Models
+namespace AuctionServiceAPI.Services
 {
     public interface IAuctionService
     {

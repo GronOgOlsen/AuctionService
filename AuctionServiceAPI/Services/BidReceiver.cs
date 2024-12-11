@@ -8,6 +8,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Text.Json;
 using AuctionServiceAPI.Models;
+using AuctionServiceAPI.Services;
 
 public class BidReceiver : BackgroundService
 {
