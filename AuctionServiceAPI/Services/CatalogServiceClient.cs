@@ -3,6 +3,7 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using AuctionServiceAPI.Interfaces;
 using Microsoft.Extensions.Logging;
+using AuctionServiceAPI.Models;
 
 namespace AuctionServiceAPI.Services
 {
@@ -17,18 +18,18 @@ namespace AuctionServiceAPI.Services
             _logger = logger;
         }
 
-        public async Task<bool> IsProductAvailableAsync(Guid productId)
+        public async Task<ProductDTO> GetAvailableProductAsync(Guid productId)
         {
-            _logger.LogInformation("Checking if ProductId: {ProductId} is available.", productId);
-            var response = await _httpClient.GetAsync($"api/catalog/product/{productId}/available");
+            _logger.LogInformation("Fetching available product with ProductId: {ProductId}", productId);
+            var response = await _httpClient.GetAsync($"product/{productId}/available");
             if (!response.IsSuccessStatusCode)
             {
-                _logger.LogWarning("Failed to validate ProductId: {ProductId}. Status code: {StatusCode}", productId, response.StatusCode);
-                return false;
+                _logger.LogWarning("ProductId: {ProductId} is not available. Status code: {StatusCode}", productId, response.StatusCode);
+                return null;
             }
 
             var content = await response.Content.ReadAsStringAsync();
-            return JsonSerializer.Deserialize<bool>(content);
+            return JsonSerializer.Deserialize<ProductDTO>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
         }
 
         public async Task SetProductInAuctionAsync(Guid productId)

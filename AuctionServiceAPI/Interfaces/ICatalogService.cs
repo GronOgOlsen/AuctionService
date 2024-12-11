@@ -7,7 +7,7 @@ namespace AuctionServiceAPI.Interfaces
 {
     public interface ICatalogService
     {
-        Task<bool> IsProductAvailableAsync(Guid productId);
+        Task<ProductDTO> GetAvailableProductAsync(Guid productId);
          Task SetProductInAuctionAsync(Guid productId);
     }
 }

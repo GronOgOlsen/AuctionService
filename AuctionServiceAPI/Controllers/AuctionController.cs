@@ -24,31 +24,37 @@ namespace AuctionServiceAPI.Controllers
         [HttpPost]
         public async Task<IActionResult> CreateAuction([FromBody] Auction auction)
         {
-            _logger.LogInformation("Attempting to create an auction for ProductId: {ProductId}", auction.Product.ProductId);
+            _logger.LogInformation("Attempting to create an auction for ProductId: {ProductId}", auction.ProductId);
 
             try
             {
-                // Validate if the product is available
-                var isAvailable = await _catalogService.IsProductAvailableAsync(auction.Product.ProductId);
-                if (!isAvailable)
+                // Hent det fulde produkt fra CatalogService
+                var product = await _catalogService.GetAvailableProductAsync(auction.ProductId);
+                if (product == null)
                 {
-                    _logger.LogWarning("ProductId: {ProductId} is not available for auction.", auction.Product.ProductId);
+                    _logger.LogWarning("ProductId: {ProductId} is not available for auction.", auction.ProductId);
                     return BadRequest("Product is not available for auction.");
                 }
 
-                // Set product status to InAuction
-                await _catalogService.SetProductInAuctionAsync(auction.Product.ProductId);
+                // Sæt produktets status til "InAuction" i CatalogService
+                await _catalogService.SetProductInAuctionAsync(auction.ProductId);
 
-                // Create the auction
-                _logger.LogInformation("Creating auction for ProductId: {ProductId}", auction.Product.ProductId);
+                // Inkluder det fulde produktobjekt i auktionen
+                auction.Product = product;
+                auction.Status = "Active";
+                auction.Bids = new List<Bid>();
+                auction.StartTime = DateTime.UtcNow;
+                auction.EndTime = DateTime.UtcNow.AddDays(1);
+
+                // Opret auktionen
                 await _auctionService.CreateAuction(auction);
 
-                _logger.LogInformation("Auction created successfully for ProductId: {ProductId}", auction.Product.ProductId);
+                _logger.LogInformation("Auction created successfully for ProductId: {ProductId}", auction.ProductId);
                 return Ok("Auction created successfully.");
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error occurred while creating auction for ProductId: {ProductId}", auction.Product.ProductId);
+                _logger.LogError(ex, "Error occurred while creating auction for ProductId: {ProductId}", auction.ProductId);
                 return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while creating the auction.");
             }
         }
