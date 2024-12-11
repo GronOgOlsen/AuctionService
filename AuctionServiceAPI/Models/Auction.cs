@@ -14,11 +14,11 @@ namespace AuctionServiceAPI.Models
         [BsonRepresentation(BsonType.String)]
         public Guid ProductId { get; set; } 
 
-        public ProductDTO Product { get; set; } // Det fulde produktobjekt, hentes fra CatalogService
+        public ProductDTO? Product { get; set; } // Det fulde produktobjekt, hentes fra CatalogService
 
         public decimal StartingPrice { get; set; } 
 
-        public List<Bid> Bids { get; set; } 
+        public List<Bid> Bids { get; set; } = new List<Bid>(); // Initialiser som tom liste
 
         public DateTime StartTime { get; set; } 
 
