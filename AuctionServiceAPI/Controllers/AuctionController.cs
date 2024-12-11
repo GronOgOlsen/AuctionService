@@ -30,31 +30,34 @@ namespace AuctionServiceAPI.Controllers
             try
             {
                 // Validate product status from CatalogService
-                var approvedProducts = await _catalogService.GetApprovedProductsAsync();
-                if (!approvedProducts.Exists(p => p.ProductId == auction.ProductId))
+                var availableProducts = await _catalogService.GetApprovedProductsAsync();
+                if (!availableProducts.Exists(p => p.ProductId == auction.ProductId))
                 {
-                    _logger.LogWarning("ProductId: {ProductId} is not approved for auction.", auction.ProductId);
-                    return BadRequest("Product is not approved for auction.");
+                    _logger.LogWarning("ProductId: {ProductId} is not available for auction.", auction.ProductId);
+                    return BadRequest("Product is not available for auction.");
                 }
 
-                // Update product status in CatalogService
-                _logger.LogInformation("Updating status for ProductId: {ProductId} to 'InAuction'.", auction.ProductId);
-                await _catalogService.UpdateProductStatusAsync(auction.ProductId, "InAuction");
+                // Prepare the product for auction in CatalogService
+                _logger.LogInformation("Preparing ProductId: {ProductId} for auction.", auction.ProductId);
+                await _catalogService.UpdateProductStatusAsync(auction.ProductId, "prepare-auction");
 
-                // Create auction
-                _logger.LogInformation("Creating auction for ProductId: {ProductId}", auction.ProductId);
+                // Update the product status to "InAuction"
+                _logger.LogInformation("Setting ProductId: {ProductId} as 'InAuction'.", auction.ProductId);
+                await _catalogService.UpdateProductStatusAsync(auction.ProductId, "in-auction");
+
+                // Create the auction
+                _logger.LogInformation("Creating auction for ProductId: {ProductId}.", auction.ProductId);
                 await _auctionService.CreateAuction(auction);
 
-                _logger.LogInformation("Auction created successfully for ProductId: {ProductId}", auction.ProductId);
+                _logger.LogInformation("Auction created successfully for ProductId: {ProductId}.", auction.ProductId);
                 return Ok("Auction created successfully");
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error occurred while creating auction for ProductId: {ProductId}", auction.ProductId);
+                _logger.LogError(ex, "Error occurred while creating auction for ProductId: {ProductId}.", auction.ProductId);
                 return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while creating the auction.");
             }
         }
-
         [HttpGet]
         public async Task<ActionResult<List<Auction>>> GetAuctions()
         {

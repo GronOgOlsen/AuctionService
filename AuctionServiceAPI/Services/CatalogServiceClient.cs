@@ -22,7 +22,7 @@ namespace AuctionServiceAPI.Services
         public async Task<List<ProductDTO>> GetApprovedProductsAsync()
         {
             _logger.LogInformation("Fetching approved products from CatalogService...");
-            var response = await _httpClient.GetAsync("products/approved"); // Brug base-URL
+            var response = await _httpClient.GetAsync("products/available"); // Ret stien
             response.EnsureSuccessStatusCode();
 
             var content = await response.Content.ReadAsStringAsync();
@@ -33,10 +33,16 @@ namespace AuctionServiceAPI.Services
 
         public async Task UpdateProductStatusAsync(Guid productId, string status)
         {
-            _logger.LogInformation("Updating product status for ProductId: {ProductId} to {Status}", productId, status);
-            var response = await _httpClient.PutAsJsonAsync($"product/{productId}/status/{status}", new { });
+            string endpoint = status.ToLower() switch
+            {
+                "prepare-auction" => $"product/{productId}/prepare-auction",
+                "in-auction" => $"product/{productId}/set-in-auction",
+                "sold" => $"product/{productId}/set-sold",
+                _ => throw new ArgumentException("Invalid status")
+            };
+
+            var response = await _httpClient.PutAsync(endpoint, null);
             response.EnsureSuccessStatusCode();
-            _logger.LogInformation("Product status updated successfully.");
         }
     }
 }
