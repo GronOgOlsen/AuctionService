@@ -2,8 +2,6 @@ using System.Net.Http;
 using System.Text.Json;
 using System.Threading.Tasks;
 using AuctionServiceAPI.Interfaces;
-using AuctionServiceAPI.Models;
-using System.Collections.Generic;
 using Microsoft.Extensions.Logging;
 
 namespace AuctionServiceAPI.Services
@@ -19,29 +17,24 @@ namespace AuctionServiceAPI.Services
             _logger = logger;
         }
 
-        public async Task<List<ProductDTO>> GetApprovedProductsAsync()
+        public async Task<bool> IsProductAvailableAsync(Guid productId)
         {
-            _logger.LogInformation("Fetching approved products from CatalogService...");
-            var response = await _httpClient.GetAsync("products/available"); // Ret stien
-            response.EnsureSuccessStatusCode();
+            _logger.LogInformation("Checking if ProductId: {ProductId} is available.", productId);
+            var response = await _httpClient.GetAsync($"api/catalog/product/{productId}/available");
+            if (!response.IsSuccessStatusCode)
+            {
+                _logger.LogWarning("Failed to validate ProductId: {ProductId}. Status code: {StatusCode}", productId, response.StatusCode);
+                return false;
+            }
 
             var content = await response.Content.ReadAsStringAsync();
-            _logger.LogInformation("Response from CatalogService: {Content}", content);
-
-            return JsonSerializer.Deserialize<List<ProductDTO>>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+            return JsonSerializer.Deserialize<bool>(content);
         }
 
-        public async Task UpdateProductStatusAsync(Guid productId, string status)
+        public async Task SetProductInAuctionAsync(Guid productId)
         {
-            string endpoint = status.ToLower() switch
-            {
-                "prepare-auction" => $"product/{productId}/prepare-auction",
-                "in-auction" => $"product/{productId}/set-in-auction",
-                "sold" => $"product/{productId}/set-sold",
-                _ => throw new ArgumentException("Invalid status")
-            };
-
-            var response = await _httpClient.PutAsync(endpoint, null);
+            _logger.LogInformation("Setting ProductId: {ProductId} status to 'InAuction'.", productId);
+            var response = await _httpClient.PutAsync($"api/catalog/product/{productId}/set-in-auction", null);
             response.EnsureSuccessStatusCode();
         }
     }

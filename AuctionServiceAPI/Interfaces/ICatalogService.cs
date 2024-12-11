@@ -7,7 +7,7 @@ namespace AuctionServiceAPI.Interfaces
 {
     public interface ICatalogService
     {
-        Task<List<ProductDTO>> GetApprovedProductsAsync();
-        Task UpdateProductStatusAsync(Guid productId, string status);
+        Task<bool> IsProductAvailableAsync(Guid productId);
+         Task SetProductInAuctionAsync(Guid productId);
     }
 }
