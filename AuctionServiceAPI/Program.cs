@@ -64,7 +64,7 @@ try
         return client.GetDatabase(configuration["DatabaseName"]);
     });
     builder.Services.AddSingleton<IAuctionService, AuctionMongoDBService>();
-    
+
     var catalogServiceUrl = Environment.GetEnvironmentVariable("catalogservicehost");
     if (string.IsNullOrEmpty(catalogServiceUrl))
     {
