@@ -21,7 +21,7 @@ namespace AuctionServiceAPI.Services
         public async Task<ProductDTO> GetAvailableProductAsync(Guid productId)
         {
             _logger.LogInformation("Fetching available product with ProductId: {ProductId}", productId);
-            var response = await _httpClient.GetAsync($"product/{productId}/available");
+            var response = await _httpClient.GetAsync($"api/catalog/product/{productId}/available");
             if (!response.IsSuccessStatusCode)
             {
                 _logger.LogWarning("ProductId: {ProductId} is not available. Status code: {StatusCode}", productId, response.StatusCode);
