@@ -64,7 +64,22 @@ try
         return client.GetDatabase(configuration["DatabaseName"]);
     });
     builder.Services.AddSingleton<IAuctionService, AuctionMongoDBService>();
-    builder.Services.AddSingleton<ICatalogService, CatalogServiceClient>();
+    
+    var catalogServiceUrl = Environment.GetEnvironmentVariable("catalogservicehost");
+    if (string.IsNullOrEmpty(catalogServiceUrl))
+    {
+        logger.Error("CatalogServiceUrl not found in environment variables");
+        throw new Exception("CatalogServiceUrl not found in environment variables");
+    }
+    else
+    {
+        logger.Info("CatalogServiceUrl: {0}", catalogServiceUrl);
+    }
+
+    builder.Services.AddHttpClient<ICatalogService, CatalogServiceClient>(client =>
+    {
+        client.BaseAddress = new Uri(catalogServiceUrl);
+    });
 
     // Configure JWT Authentication
     builder.Services.AddAuthentication(options =>
