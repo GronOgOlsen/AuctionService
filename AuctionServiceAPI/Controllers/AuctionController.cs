@@ -24,34 +24,35 @@ namespace AuctionServiceAPI.Controllers
         [HttpPost]
         public async Task<IActionResult> CreateAuction([FromBody] Auction auction)
         {
-            _logger.LogInformation("Attempting to create an auction for ProductId: {ProductId}", auction.ProductId);
+            _logger.LogInformation("Attempting to create an auction for ProductId: {ProductId}", auction.Product.ProductId);
 
             try
             {
                 // Validate if the product is available
-                var isAvailable = await _catalogService.IsProductAvailableAsync(auction.ProductId);
+                var isAvailable = await _catalogService.IsProductAvailableAsync(auction.Product.ProductId);
                 if (!isAvailable)
                 {
-                    _logger.LogWarning("ProductId: {ProductId} is not available for auction.", auction.ProductId);
+                    _logger.LogWarning("ProductId: {ProductId} is not available for auction.", auction.Product.ProductId);
                     return BadRequest("Product is not available for auction.");
                 }
 
                 // Set product status to InAuction
-                await _catalogService.SetProductInAuctionAsync(auction.ProductId);
+                await _catalogService.SetProductInAuctionAsync(auction.Product.ProductId);
 
                 // Create the auction
-                _logger.LogInformation("Creating auction for ProductId: {ProductId}", auction.ProductId);
+                _logger.LogInformation("Creating auction for ProductId: {ProductId}", auction.Product.ProductId);
                 await _auctionService.CreateAuction(auction);
 
-                _logger.LogInformation("Auction created successfully for ProductId: {ProductId}", auction.ProductId);
+                _logger.LogInformation("Auction created successfully for ProductId: {ProductId}", auction.Product.ProductId);
                 return Ok("Auction created successfully.");
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error occurred while creating auction for ProductId: {ProductId}", auction.ProductId);
+                _logger.LogError(ex, "Error occurred while creating auction for ProductId: {ProductId}", auction.Product.ProductId);
                 return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while creating the auction.");
             }
         }
+
 
         [HttpGet]
         public async Task<IActionResult> GetAuctions()
