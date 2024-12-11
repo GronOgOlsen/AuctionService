@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using System.Text.Json;
 using AuctionServiceAPI.Models;
 using AuctionServiceAPI.Services;
+using AuctionServiceAPI.Interfaces;
 
 public class BidReceiver : BackgroundService
 {
@@ -45,7 +46,7 @@ public class BidReceiver : BackgroundService
     {
         _logger.LogInformation($"Bid received {message}");
 
-        try
+        /* try
         {
             var bid = JsonSerializer.Deserialize<Bid>(message);
 
@@ -62,7 +63,7 @@ public class BidReceiver : BackgroundService
         catch (Exception ex)
         {
             _logger.LogError($"Error processing bid: {ex.Message}");
-        }
+        } */
     }
 
     public override void Dispose()
