@@ -54,5 +54,20 @@ namespace AuctionServiceAPI.Services
             _logger.LogWarning("Failed to set ProductId: {ProductId} to 'Sold'. Status code: {StatusCode}", productId, response.StatusCode);
             return false;
         }
+
+        public async Task<bool> SetProductStatusToFailedAuctionAsync(Guid productId)
+        {
+            _logger.LogInformation("Setting ProductId: {ProductId} status to 'FailedInAuction'.", productId);
+            var response = await _httpClient.PutAsync($"api/catalog/product/{productId}/set-failed-auction", null);
+
+            if (response.IsSuccessStatusCode)
+            {
+                _logger.LogInformation("Successfully set ProductId: {ProductId} to 'FailedInAuction'.", productId);
+                return true;
+            }
+
+            _logger.LogWarning("Failed to set ProductId: {ProductId} to 'FailedInAuction'. Status code: {StatusCode}", productId, response.StatusCode);
+            return false;
+        }
     }
 }

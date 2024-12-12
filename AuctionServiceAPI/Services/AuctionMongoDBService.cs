@@ -65,29 +65,43 @@ namespace AuctionServiceAPI.Services
 
         public async Task EndAuctionAsync(Auction auction)
         {
+            // Find det højeste bud, hvis der er nogen
             var highestBid = auction.Bids?.OrderByDescending(b => b.Amount).FirstOrDefault();
 
             if (highestBid != null)
             {
+                // Hvis der er et bud, markeres auktionen som 'Completed'
                 auction.Status = "Completed";
                 auction.WinningBid = highestBid;
 
-                // Opdater produktstatus i CatalogService
+                // Opdater produktstatus i CatalogService til 'Sold'
                 var updated = await _catalogService.SetProductStatusToSoldAsync(auction.ProductId);
                 if (!updated)
                 {
+                    // Log en fejl og kast en undtagelse, hvis opdateringen fejler
                     throw new Exception($"Failed to update product status to 'Sold' for ProductId: {auction.ProductId}");
                 }
             }
             else
             {
-                auction.Status = "Failed"; // Ingen bud
+                // Hvis der ikke er nogen bud, markeres auktionen som 'Failed'
+                auction.Status = "Failed";
+
+                // Opdater produktstatus i CatalogService til 'FailedInAuction'
+                var updated = await _catalogService.SetProductStatusToFailedAuctionAsync(auction.ProductId);
+                if (!updated)
+                {
+                    // Log en fejl, men fortsæt. Auktionen er allerede markeret som 'Failed'
+                    // Overvej, om dette skal kaste en undtagelse afhængigt af systemets krav.
+                    throw new Exception($"Failed to update product status to 'FailedInAuction' for ProductId: {auction.ProductId}");
+                }
             }
 
-            // Gem opdateret auktion
+            // Gem den opdaterede auktion tilbage i databasen
             var filter = Builders<Auction>.Filter.Eq(a => a.AuctionId, auction.AuctionId);
             await _auctions.ReplaceOneAsync(filter, auction);
         }
+
 
     }
 }
