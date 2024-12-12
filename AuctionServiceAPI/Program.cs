@@ -63,7 +63,9 @@ try
         var client = sp.GetRequiredService<IMongoClient>();
         return client.GetDatabase(configuration["DatabaseName"]);
     });
+
     builder.Services.AddSingleton<IAuctionService, AuctionMongoDBService>();
+    builder.Services.AddHostedService<BidReceiver>();
 
     var catalogServiceUrl = Environment.GetEnvironmentVariable("catalogservicehost");
     if (string.IsNullOrEmpty(catalogServiceUrl))
