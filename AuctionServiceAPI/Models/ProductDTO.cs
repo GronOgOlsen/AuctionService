@@ -40,5 +40,6 @@ namespace AuctionServiceAPI.Models
         Available = 1,      // Produkt er tilgængeligt for auktion
         InAuction = 2,      // Produkt er aktivt i en auktion
         Sold = 3,           // Produkt er solgt gennem auktion
+        FailedInAuction = 4 // Produkt har Ingen bud efter endt auktion
     }
 }
