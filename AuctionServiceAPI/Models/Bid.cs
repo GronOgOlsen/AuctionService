@@ -1,14 +1,21 @@
-﻿using MongoDB.Bson.Serialization.Attributes;
+﻿using System;
+using MongoDB.Bson.Serialization.Attributes;
+using MongoDB.Bson;
 
 namespace AuctionServiceAPI.Models
 {
     public class Bid
     {
         [BsonId]
+        [BsonRepresentation(BsonType.String)]
         public Guid _id { get; set; }
-        public User user { get; set; }
-        public float bidPrice { get; set; }
-        public Guid auctionId { get; set; }
-        public DateTime? dateTime { get; set; } = DateTime.Now;
+
+        [BsonRepresentation(BsonType.String)]
+        public Guid AuctionId { get; set; }
+
+        [BsonRepresentation(BsonType.String)]
+        public Guid UserId { get; set; }
+        public decimal Amount { get; set; }
+        public DateTime Timestamp { get; set; }
     }
 }
