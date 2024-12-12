@@ -58,7 +58,7 @@ namespace AuctionServiceAPI.Services
         public async Task<bool> SetProductStatusToFailedAuctionAsync(Guid productId)
         {
             _logger.LogInformation("Setting ProductId: {ProductId} status to 'FailedInAuction'.", productId);
-            var response = await _httpClient.PutAsync($"api/catalog/product/{productId}/set-failed-auction", null);
+            var response = await _httpClient.PutAsync($"api/catalog/product/{productId}/set-failed-in-auction", null);
 
             if (response.IsSuccessStatusCode)
             {
