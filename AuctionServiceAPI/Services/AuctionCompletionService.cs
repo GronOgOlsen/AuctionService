@@ -1,98 +1,65 @@
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+using System;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using AuctionServiceAPI.Interfaces;
 using AuctionServiceAPI.Models;
-using MongoDB.Driver;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace AuctionServiceAPI.Services
 {
-    public class AuctionMongoDBService : IAuctionService
+    public class AuctionCompletionService : BackgroundService
     {
-        private readonly IMongoCollection<Auction> _auctions;
-        private readonly ICatalogService _catalogService;
+        private readonly IAuctionService _auctionService;
+        private readonly ILogger<AuctionCompletionService> _logger;
 
-        public AuctionMongoDBService(IMongoDatabase database, ICatalogService catalogService)
+        public AuctionCompletionService(IAuctionService auctionService, ILogger<AuctionCompletionService> logger)
         {
-            _auctions = database.GetCollection<Auction>("Auctions");
-            _catalogService = catalogService; // Initialiser ICatalogService
+            _auctionService = auctionService;
+            _logger = logger;
         }
 
-        public async Task CreateAuction(Auction auction)
+        protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            await _auctions.InsertOneAsync(auction);
-        }
+            _logger.LogInformation("AuctionCompletionService started.");
 
-        public async Task<List<Auction>> GetAuctions()
-        {
-            return await _auctions.Find(_ => true).ToListAsync();
-        }
-
-        public async Task<bool> ProcessBidAsync(Bid bid)
-        {
-            // Find auktionen
-            var auction = await _auctions.Find(a => a.AuctionId == bid.AuctionId).FirstOrDefaultAsync();
-
-            if (auction == null)
+            while (!stoppingToken.IsCancellationRequested)
             {
-                // Auktionen findes ikke
-                return false;
-            }
-
-            // Tjek om buddet er højere end det nuværende højeste bud
-            var highestBid = auction.Bids?.Count > 0
-                ? auction.Bids.Max(b => b.Amount)
-                : auction.StartingPrice;
-
-            if (bid.Amount <= highestBid)
-            {
-                // Buddet er ikke højere end det nuværende højeste bud
-                return false;
-            }
-
-            // Tilføj buddet til listen
-            auction.Bids ??= new List<Bid>();
-            auction.Bids.Add(bid);
-
-            // Opdater auktionen i databasen
-            var updateResult = await _auctions.ReplaceOneAsync(
-                a => a.AuctionId == bid.AuctionId,
-                auction
-            );
-
-            return updateResult.ModifiedCount > 0;
-        }
-
-        public async Task<List<Auction>> GetExpiredAuctionsAsync()
-        {
-            var now = DateTime.UtcNow;
-            return await _auctions.Find(a => a.EndTime <= now && a.Status == "Active").ToListAsync();
-        }
-
-        public async Task EndAuctionAsync(Auction auction)
-        {
-            var highestBid = auction.Bids?.OrderByDescending(b => b.Amount).FirstOrDefault();
-
-            if (highestBid != null)
-            {
-                auction.Status = "Completed";
-                auction.WinningBid = highestBid;
-
-                // Opdater produktstatus i CatalogService
-                var updated = await _catalogService.SetProductStatusToSoldAsync(auction.ProductId);
-                if (!updated)
+                try
                 {
-                    throw new Exception($"Failed to update product status to 'Sold' for ProductId: {auction.ProductId}");
+                    _logger.LogInformation("Checking for expired auctions...");
+
+                    // Hent alle udløbne auktioner
+                    var expiredAuctions = await _auctionService.GetExpiredAuctionsAsync();
+
+                    foreach (var auction in expiredAuctions)
+                    {
+                        try
+                        {
+                            _logger.LogInformation($"Ending auction with ID: {auction.AuctionId}");
+
+                            // Afslut auktionen ved at kalde metoden i IAuctionService
+                            await _auctionService.EndAuctionAsync(auction);
+
+                            _logger.LogInformation($"Auction with ID: {auction.AuctionId} ended successfully.");
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogError(ex, $"Failed to process auction with ID: {auction.AuctionId}");
+                        }
+                    }
                 }
-            }
-            else
-            {
-                auction.Status = "Failed"; // Ingen bud
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "An error occurred while checking or processing expired auctions.");
+                }
+
+                // Vent et minut før næste kontrol
+                await Task.Delay(TimeSpan.FromMinutes(1), stoppingToken);
             }
 
-            // Gem opdateret auktion
-            var filter = Builders<Auction>.Filter.Eq(a => a.AuctionId, auction.AuctionId);
-            await _auctions.ReplaceOneAsync(filter, auction);
+            _logger.LogInformation("AuctionCompletionService is stopping.");
         }
     }
 }

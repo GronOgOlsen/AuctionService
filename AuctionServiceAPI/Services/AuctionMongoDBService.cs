@@ -2,6 +2,7 @@
 using AuctionServiceAPI.Models;
 using MongoDB.Driver;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace AuctionServiceAPI.Services
@@ -9,10 +10,12 @@ namespace AuctionServiceAPI.Services
     public class AuctionMongoDBService : IAuctionService
     {
         private readonly IMongoCollection<Auction> _auctions;
+        private readonly ICatalogService _catalogService;
 
-        public AuctionMongoDBService(IMongoDatabase database)
+        public AuctionMongoDBService(IMongoDatabase database, ICatalogService catalogService)
         {
             _auctions = database.GetCollection<Auction>("Auctions");
+            _catalogService = catalogService;
         }
 
         public async Task CreateAuction(Auction auction)
@@ -27,31 +30,25 @@ namespace AuctionServiceAPI.Services
 
         public async Task<bool> ProcessBidAsync(Bid bid)
         {
-            // Find auktionen
             var auction = await _auctions.Find(a => a.AuctionId == bid.AuctionId).FirstOrDefaultAsync();
 
             if (auction == null)
             {
-                // Auktionen findes ikke
                 return false;
             }
 
-            // Tjek om buddet er højere end det nuværende højeste bud
             var highestBid = auction.Bids?.Count > 0
                 ? auction.Bids.Max(b => b.Amount)
                 : auction.StartingPrice;
 
             if (bid.Amount <= highestBid)
             {
-                // Buddet er ikke højere end det nuværende højeste bud
                 return false;
             }
 
-            // Tilføj buddet til listen
             auction.Bids ??= new List<Bid>();
             auction.Bids.Add(bid);
 
-            // Opdater auktionen i databasen
             var updateResult = await _auctions.ReplaceOneAsync(
                 a => a.AuctionId == bid.AuctionId,
                 auction
@@ -91,5 +88,6 @@ namespace AuctionServiceAPI.Services
             var filter = Builders<Auction>.Filter.Eq(a => a.AuctionId, auction.AuctionId);
             await _auctions.ReplaceOneAsync(filter, auction);
         }
+
     }
 }

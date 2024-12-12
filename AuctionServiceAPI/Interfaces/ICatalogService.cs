@@ -9,5 +9,6 @@ namespace AuctionServiceAPI.Interfaces
     {
         Task<ProductDTO> GetAvailableProductAsync(Guid productId);
          Task SetProductInAuctionAsync(Guid productId);
+         Task<bool> SetProductStatusToSoldAsync(Guid productId);
     }
 }
