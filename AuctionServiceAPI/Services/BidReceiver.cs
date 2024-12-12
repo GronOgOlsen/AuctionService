@@ -30,7 +30,7 @@ public class BidReceiver : BackgroundService
 
         var connection = factory.CreateConnection();
         _channel = connection.CreateModel();
-        _channel.QueueDeclare(queue: "BiddingQueue", durable: false, exclusive: false, autoDelete: false, arguments: null);
+        _channel.QueueDeclare(queue: "BiddingQueue", durable: true, exclusive: false, autoDelete: false, arguments: null);
     }
 
     protected override Task ExecuteAsync(CancellationToken stoppingToken)
