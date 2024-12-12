@@ -1,7 +1,8 @@
-﻿using AuctionServiceAPI.Interfaces;
+using AuctionServiceAPI.Interfaces;
 using AuctionServiceAPI.Models;
 using MongoDB.Driver;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace AuctionServiceAPI.Services
@@ -9,10 +10,12 @@ namespace AuctionServiceAPI.Services
     public class AuctionMongoDBService : IAuctionService
     {
         private readonly IMongoCollection<Auction> _auctions;
+        private readonly ICatalogService _catalogService;
 
-        public AuctionMongoDBService(IMongoDatabase database)
+        public AuctionMongoDBService(IMongoDatabase database, ICatalogService catalogService)
         {
             _auctions = database.GetCollection<Auction>("Auctions");
+            _catalogService = catalogService; // Initialiser ICatalogService
         }
 
         public async Task CreateAuction(Auction auction)

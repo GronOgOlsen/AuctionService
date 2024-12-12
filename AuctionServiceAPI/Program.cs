@@ -65,7 +65,9 @@ try
     });
 
     builder.Services.AddSingleton<IAuctionService, AuctionMongoDBService>();
+    builder.Services.AddSingleton<ICatalogService, CatalogServiceClient>();
     builder.Services.AddHostedService<BidReceiver>();
+    builder.Services.AddHostedService<AuctionCompletionService>();
 
     var catalogServiceUrl = Environment.GetEnvironmentVariable("catalogservicehost");
     if (string.IsNullOrEmpty(catalogServiceUrl))

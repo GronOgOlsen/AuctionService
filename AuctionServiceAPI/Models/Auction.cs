@@ -20,6 +20,8 @@ namespace AuctionServiceAPI.Models
 
         public List<Bid> Bids { get; set; } = new List<Bid>(); // Initialiser som tom liste
 
+        public Bid? WinningBid { get; set; } 
+
         public DateTime StartTime { get; set; } 
 
         public DateTime EndTime { get; set; } 

@@ -38,5 +38,21 @@ namespace AuctionServiceAPI.Services
             var response = await _httpClient.PutAsync($"api/catalog/product/{productId}/set-in-auction", null);
             response.EnsureSuccessStatusCode();
         }
+
+
+        public async Task<bool> SetProductStatusToSoldAsync(Guid productId)
+        {
+            _logger.LogInformation("Setting ProductId: {ProductId} status to 'Sold'.", productId);
+            var response = await _httpClient.PutAsync($"api/catalog/product/{productId}/set-sold", null);
+
+            if (response.IsSuccessStatusCode)
+            {
+                _logger.LogInformation("Successfully set ProductId: {ProductId} to 'Sold'.", productId);
+                return true;
+            }
+
+            _logger.LogWarning("Failed to set ProductId: {ProductId} to 'Sold'. Status code: {StatusCode}", productId, response.StatusCode);
+            return false;
+        }
     }
 }

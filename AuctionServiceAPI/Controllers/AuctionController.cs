@@ -21,7 +21,7 @@ namespace AuctionServiceAPI.Controllers
             _logger = logger;
         }
 
-        [HttpPost]
+        [HttpPost("create-auction")]
         public async Task<IActionResult> CreateAuction([FromBody] Auction auction)
         {
             _logger.LogInformation("Attempting to create an auction for ProductId: {ProductId}", auction.ProductId);
@@ -60,7 +60,7 @@ namespace AuctionServiceAPI.Controllers
         }
 
 
-        [HttpGet]
+        [HttpGet("auctions")]
         public async Task<IActionResult> GetAuctions()
         {
             _logger.LogInformation("Fetching list of auctions...");
