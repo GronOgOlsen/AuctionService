@@ -18,6 +18,8 @@ namespace AuctionServiceAPI.Models
 
         public decimal StartingPrice { get; set; } 
 
+        public decimal ValuedAt { get; set; }
+
         public List<Bid> Bids { get; set; } = new List<Bid>(); // Initialiser som tom liste
 
         public Bid? WinningBid { get; set; } 

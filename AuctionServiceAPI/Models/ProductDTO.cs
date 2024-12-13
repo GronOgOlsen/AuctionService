@@ -13,7 +13,7 @@ namespace AuctionServiceAPI.Models
         public ProductCategory ProductCategory { get; set; }
         public string? Title { get; set; }
         public string? Description { get; set; }
-        public decimal StartingPrice { get; set; }
+        public decimal CustomerPrice { get; set; }
 
         [BsonRepresentation(BsonType.String)]
         public ProductStatus Status { get; set; } = ProductStatus.Pending;
