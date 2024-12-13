@@ -7,28 +7,33 @@ using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using VaultSharp;
+using VaultSharp.V1.AuthMethods.Token;
+using VaultSharp.V1.Commons;
 using AuctionServiceAPI.Models;
 using AuctionServiceAPI.Services;
 using AuctionServiceAPI.Interfaces;
 using NLog;
 using NLog.Web;
+using System;
+
 
 var logger = NLog.LogManager.Setup().LoadConfigurationFromAppSettings()
-    .GetCurrentClassLogger();
+.GetCurrentClassLogger();
 logger.Debug("init main");
 
 try
 {
     var builder = WebApplication.CreateBuilder(args);
+
     var configuration = builder.Configuration;
 
-    // Vault Service: Hent hemmeligheder
     var vaultService = new VaultService(configuration);
+
     string mySecret = await vaultService.GetSecretAsync("secrets", "SecretKey") ?? "????";
     string myIssuer = await vaultService.GetSecretAsync("secrets", "IssuerKey") ?? "????";
     string myConnectionString = await vaultService.GetSecretAsync("secrets", "MongoConnectionString") ?? "????";
 
-    // Tilføj hemmeligheder til applikationens konfiguration
+    // Set secrets, issuer, and connection string in the configuration
     configuration["SecretKey"] = mySecret;
     configuration["IssuerKey"] = myIssuer;
     configuration["MongoConnectionString"] = myConnectionString;
@@ -47,29 +52,23 @@ try
         logger.Info("ConnectionString: {0}", myConnectionString);
     }
 
-    // Tilføj services til containeren
-    builder.Services.AddControllers(); // Registrerer API-controllers
-    builder.Services.AddEndpointsApiExplorer(); // Swagger-endpoints
-    builder.Services.AddSwaggerGen(); // Tilføjer Swagger til dokumentation
-    builder.Services.AddTransient<VaultService>(); // Vault-service til håndtering af hemmeligheder
-
-    // MongoDB-konfiguration
+    // Add services to the container
+    builder.Services.AddEndpointsApiExplorer();
+    builder.Services.AddSwaggerGen();
+    builder.Services.AddControllers();
+    builder.Services.AddTransient<VaultService>();
     builder.Services.AddSingleton<IMongoClient>(_ => new MongoClient(myConnectionString));
     builder.Services.AddSingleton<IMongoDatabase>(sp =>
     {
         var client = sp.GetRequiredService<IMongoClient>();
-        return client.GetDatabase(configuration["DatabaseName"]); // Hent MongoDB-database
+        return client.GetDatabase(configuration["DatabaseName"]);
     });
 
-    // Registrer AuctionService og CatalogService
     builder.Services.AddSingleton<IAuctionService, AuctionMongoDBService>();
     builder.Services.AddSingleton<ICatalogService, CatalogServiceClient>();
+    builder.Services.AddHostedService<BidReceiver>();
+    builder.Services.AddHostedService<AuctionCompletionService>();
 
-    // Hosted services til asynkrone opgaver
-    builder.Services.AddHostedService<BidReceiver>(); // Modtag bud fra RabbitMQ
-    builder.Services.AddHostedService<AuctionCompletionService>(); // Afslut auktioner automatisk
-
-    // Hent URL for CatalogService fra miljøvariabler
     var catalogServiceUrl = Environment.GetEnvironmentVariable("catalogservicehost");
     if (string.IsNullOrEmpty(catalogServiceUrl))
     {
@@ -83,10 +82,10 @@ try
 
     builder.Services.AddHttpClient<ICatalogService, CatalogServiceClient>(client =>
     {
-        client.BaseAddress = new Uri(catalogServiceUrl); // Sætter base-URL for CatalogService API
+        client.BaseAddress = new Uri(catalogServiceUrl);
     });
 
-    // JWT Authentication-konfiguration
+    // Configure JWT Authentication
     builder.Services.AddAuthentication(options =>
     {
         options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -96,19 +95,18 @@ try
     {
         options.TokenValidationParameters = new TokenValidationParameters()
         {
-            ValidateIssuer = true, // Validerer udsteder
-            ValidateAudience = true, // Validerer audience
-            ValidateLifetime = true, // Validerer tokenets levetid
-            ValidateIssuerSigningKey = true, // Validerer signeringsnøgle
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
             ValidIssuer = myIssuer,
             ValidAudience = "http://localhost",
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(mySecret)),
-            ClockSkew = TimeSpan.Zero // Ingen forsinkelse på udløb
+            ClockSkew = TimeSpan.Zero
         };
 
         options.Events = new JwtBearerEvents
         {
-            // Logger fejl ved udløbne tokens
             OnAuthenticationFailed = context =>
             {
                 if (context.Exception.GetType() == typeof(SecurityTokenExpiredException))
@@ -121,39 +119,38 @@ try
         };
     });
 
-    // Autorisations-politikker
     builder.Services.AddAuthorization(options =>
     {
-        options.AddPolicy("UserRolePolicy", policy => policy.RequireRole("1")); // Politik for brugerrolle
-        options.AddPolicy("AdminRolePolicy", policy => policy.RequireRole("2")); // Politik for adminrolle
+        options.AddPolicy("UserRolePolicy", policy => policy.RequireRole("1")); // Brugerrolle-politik
+        options.AddPolicy("AdminRolePolicy", policy => policy.RequireRole("2")); // Adminrolle-politik
     });
 
-    // Konfiguration af logging
+
     builder.Logging.ClearProviders();
     builder.Host.UseNLog();
 
     var app = builder.Build();
 
-    // HTTP-pipeline-konfiguration
+    // Configure the HTTP request pipeline
     if (app.Environment.IsDevelopment())
     {
-        app.UseSwagger(); // Aktiver Swagger i udviklingsmiljø
+        app.UseSwagger();
         app.UseSwaggerUI();
     }
 
-    app.MapControllers(); // Map controllers til endpoints
-    app.UseHttpsRedirection(); // Tving HTTPS
-    app.UseAuthentication(); // Aktiver autentificering
-    app.UseAuthorization(); // Aktiver autorisation
+    app.MapControllers();
+    app.UseHttpsRedirection();
+    app.UseAuthentication();
+    app.UseAuthorization();
 
-    app.Run(); // Start applikationen
+    app.Run();
 }
 catch (Exception ex)
 {
-    logger.Error(ex, "Stopped program because of exception"); // Logger fejl
+    logger.Error(ex, "Stopped program because of exception");
     throw;
 }
 finally
 {
-    NLog.LogManager.Shutdown(); // Lukker NLog korrekt ned
+    NLog.LogManager.Shutdown();
 }
