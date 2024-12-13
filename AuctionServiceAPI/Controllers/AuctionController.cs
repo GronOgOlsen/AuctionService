@@ -3,6 +3,7 @@ using AuctionServiceAPI.Interfaces;
 using AuctionServiceAPI.Models;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
+using Microsoft.AspNetCore.Authorization;
 
 namespace AuctionServiceAPI.Controllers
 {
@@ -22,6 +23,7 @@ namespace AuctionServiceAPI.Controllers
         }
 
         [HttpPost("create-auction")]
+        [Authorize(Roles = "2")]
         public async Task<IActionResult> CreateAuction([FromBody] Auction auction)
         {
             _logger.LogInformation("Attempting to create an auction for ProductId: {ProductId}", auction.ProductId);
@@ -61,6 +63,7 @@ namespace AuctionServiceAPI.Controllers
 
 
         [HttpGet("auctions")]
+        [Authorize(Roles = "1, 2")]
         public async Task<IActionResult> GetAuctions()
         {
             _logger.LogInformation("Fetching list of auctions...");

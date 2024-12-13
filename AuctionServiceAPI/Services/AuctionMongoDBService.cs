@@ -91,8 +91,6 @@ namespace AuctionServiceAPI.Services
                 var updated = await _catalogService.SetProductStatusToFailedAuctionAsync(auction.ProductId);
                 if (!updated)
                 {
-                    // Log en fejl, men fortsæt. Auktionen er allerede markeret som 'Failed'
-                    // Overvej, om dette skal kaste en undtagelse afhængigt af systemets krav.
                     throw new Exception($"Failed to update product status to 'FailedInAuction' for ProductId: {auction.ProductId}");
                 }
             }
