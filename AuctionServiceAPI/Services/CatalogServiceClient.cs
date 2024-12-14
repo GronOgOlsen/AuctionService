@@ -1,4 +1,5 @@
 using System.Net.Http;
+using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 using AuctionServiceAPI.Interfaces;
@@ -32,12 +33,22 @@ namespace AuctionServiceAPI.Services
             return JsonSerializer.Deserialize<ProductDTO>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
         }
 
-        public async Task SetProductInAuctionAsync(Guid productId)
+        public async Task SetProductInAuctionAsync(Guid productId, Guid auctionId)
         {
-            _logger.LogInformation("Setting ProductId: {ProductId} status to 'InAuction'.", productId);
-            var response = await _httpClient.PutAsync($"api/catalog/product/{productId}/set-in-auction", null);
+            _logger.LogInformation("Setting ProductId: {ProductId} status to 'InAuction' with AuctionId: {AuctionId}", productId, auctionId);
+
+            // Serializér auctionId med System.Text.Json
+            var json = JsonSerializer.Serialize(auctionId);
+
+            // Opret request-body med den serialiserede JSON
+            var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+            // Udfør PUT-anmodning
+            var response = await _httpClient.PutAsync($"api/catalog/product/{productId}/set-in-auction", content);
+
             response.EnsureSuccessStatusCode();
         }
+
 
 
         public async Task<bool> SetProductStatusToSoldAsync(Guid productId)

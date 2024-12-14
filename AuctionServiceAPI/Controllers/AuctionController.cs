@@ -38,8 +38,8 @@ namespace AuctionServiceAPI.Controllers
                     return BadRequest("Product is not available for auction.");
                 }
 
-                // Sæt produktets status til "InAuction" i CatalogService
-                await _catalogService.SetProductInAuctionAsync(auction.ProductId);
+                // Sæt produktet til 'InAuction' i Catalog og tilføj auktionensId til produktet
+                await _catalogService.SetProductInAuctionAsync(auction.ProductId, auction.AuctionId);
 
                 // Inkluder det fulde produktobjekt i auktionen
                 auction.Product = product;

@@ -19,7 +19,8 @@ namespace AuctionServiceAPI.Models
         public ProductStatus Status { get; set; } = ProductStatus.Pending;
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public string? SellerId { get; set; }
-        public string? CurrentAuctionId { get; set; }
+        [BsonRepresentation(BsonType.String)]
+        public Guid? CurrentAuctionId { get; set; }
     }
 
     public enum ProductCategory
