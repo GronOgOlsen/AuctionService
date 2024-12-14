@@ -71,7 +71,7 @@ namespace AuctionServiceAPI.Controllers
         }
 
         // Hent alle auktioner (tilgængelig for både brugere og administratorer)
-        [HttpGet("auctions")]
+        [HttpGet]
         [Authorize(Roles = "1, 2")]
         public async Task<IActionResult> GetAuctions()
         {
@@ -90,7 +90,7 @@ namespace AuctionServiceAPI.Controllers
         }
 
         // Hent en specifik auktion (tilgængelig for både brugere og administratorer)
-        [HttpGet("auction/{id}")]
+        [HttpGet("{id}")]
         [Authorize(Roles = "1, 2")]
         public async Task<IActionResult> GetAuctionById(Guid id)
         {
