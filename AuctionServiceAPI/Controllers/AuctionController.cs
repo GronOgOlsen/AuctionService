@@ -30,7 +30,7 @@ namespace AuctionServiceAPI.Controllers
 
             try
             {
-                // Hent det fulde produkt fra CatalogService
+                // 1) Hent produktet 
                 var product = await _catalogService.GetAvailableProductAsync(auction.ProductId);
                 if (product == null)
                 {
@@ -38,17 +38,21 @@ namespace AuctionServiceAPI.Controllers
                     return BadRequest("Product is not available for auction.");
                 }
 
-                // Sæt produktet til 'InAuction' i Catalog og tilføj auktionensId til produktet
+                // 2) Generer AuctionId, hvis det ikke allerede er sat
+                if (auction.AuctionId == Guid.Empty)
+                    auction.AuctionId = Guid.NewGuid();
+
+                // 3) Opdater produkt-status i CatalogService 
                 await _catalogService.SetProductInAuctionAsync(auction.ProductId, auction.AuctionId);
 
-                // Inkluder det fulde produktobjekt i auktionen
+                // 4) Udfyld resten af auktionen
                 auction.Product = product;
                 auction.Status = "Active";
                 auction.Bids = new List<Bid>();
                 auction.StartTime = DateTime.UtcNow;
                 auction.EndTime = DateTime.UtcNow.AddDays(1);
 
-                // Opret auktionen
+                 // 5) Opret selve auktionen i AuctionService-databasen
                 await _auctionService.CreateAuction(auction);
 
                 _logger.LogInformation("Auction created successfully for ProductId: {ProductId}", auction.ProductId);
