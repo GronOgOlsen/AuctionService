@@ -8,6 +8,7 @@ namespace AuctionServiceAPI.Interfaces
     {
         Task CreateAuction(Auction auction);
         Task<List<Auction>> GetAuctions();
+        Task<Auction> GetAuctionById(Guid auctionId);
         Task<bool> ProcessBidAsync(Bid bid);
         Task<List<Auction>> GetExpiredAuctionsAsync();
         Task EndAuctionAsync(Auction auction);

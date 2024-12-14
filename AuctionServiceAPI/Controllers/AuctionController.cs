@@ -36,7 +36,7 @@ namespace AuctionServiceAPI.Controllers
                 if (product == null)
                 {
                     _logger.LogWarning("ProductId: {ProductId} is not a product or not available for auction.", auction.ProductId);
-                    return BadRequest("The product does not exist, or has not yet been set to available by admin", auction.ProductId);
+                    return BadRequest("The product does not exist, or has not yet been set to available by admin");
                 }
 
                 // 2) Generer AuctionId, hvis det ikke allerede er sat
@@ -61,7 +61,7 @@ namespace AuctionServiceAPI.Controllers
                 await _auctionService.CreateAuction(auction);
 
                 _logger.LogInformation("Auction created successfully for ProductId: {ProductId}", auction.ProductId);
-                return Ok("Auction with id: {auction.AuctionId} created successfully.", auction.AuctionId);
+                return Ok("Auction created successfully.");
             }
             catch (Exception ex)
             {
@@ -92,19 +92,19 @@ namespace AuctionServiceAPI.Controllers
         // Hent en specifik auktion (tilgængelig for både brugere og administratorer)
         [HttpGet("auction/{id}")]
         [Authorize(Roles = "1, 2")]
-        public async Task<IActionResult> GetAuction(Guid id)
+        public async Task<IActionResult> GetAuctionById(Guid id)
         {
             _logger.LogInformation("Fetching auction with ID: {AuctionId}", id);
             try
             {
-                var auction = await _auctionService.GetAuction(id);
+                var auction = await _auctionService.GetAuctionById(id);
                 if (auction == null)
                 {
                     _logger.LogWarning("Auction with ID: {AuctionId} not found.", id);
                     return NotFound("Auction not found.");
                 }
 
-                _logger.LogInformation("Successfully fetched auction with ID: {AuctionId}", id);
+                _logger.LogInformation("Successfully fetched auction with ID: {AuctionId}.", id);
                 return Ok(auction);
             }
             catch (Exception ex)

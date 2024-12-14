@@ -28,6 +28,11 @@ namespace AuctionServiceAPI.Services
             return await _auctions.Find(_ => true).ToListAsync();
         }
 
+        public async Task<Auction> GetAuctionById(Guid auctionId)
+        {
+            return await _auctions.Find(a => a.AuctionId == auctionId).FirstOrDefaultAsync();
+        }
+
         public async Task<bool> ProcessBidAsync(Bid bid)
         {
             var auction = await _auctions.Find(a => a.AuctionId == bid.AuctionId).FirstOrDefaultAsync();
