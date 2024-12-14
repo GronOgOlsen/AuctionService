@@ -22,6 +22,7 @@ namespace AuctionServiceAPI.Controllers
             _logger = logger;
         }
 
+        // Opret en auktion (kun tilgængelig for administratorer)
         [HttpPost("create-auction")]
         [Authorize(Roles = "2")]
         public async Task<IActionResult> CreateAuction([FromBody] Auction auction)
@@ -34,8 +35,8 @@ namespace AuctionServiceAPI.Controllers
                 var product = await _catalogService.GetAvailableProductAsync(auction.ProductId);
                 if (product == null)
                 {
-                    _logger.LogWarning("ProductId: {ProductId} is not available for auction.", auction.ProductId);
-                    return BadRequest("Product is not available for auction.");
+                    _logger.LogWarning("ProductId: {ProductId} is not a product or not available for auction.", auction.ProductId);
+                    return BadRequest("The product does not exist, or has not yet been set to available by admin", auction.ProductId);
                 }
 
                 // 2) Generer AuctionId, hvis det ikke allerede er sat
@@ -45,18 +46,22 @@ namespace AuctionServiceAPI.Controllers
                 // 3) Opdater produkt-status i CatalogService 
                 await _catalogService.SetProductInAuctionAsync(auction.ProductId, auction.AuctionId);
 
-                // 4) Udfyld resten af auktionen
+                // 4) Sæt auktionens start-, sluttid, status og produkt
                 auction.Product = product;
                 auction.Status = "Active";
                 auction.Bids = new List<Bid>();
                 auction.StartTime = DateTime.UtcNow;
-                auction.EndTime = DateTime.UtcNow.AddDays(1);
+                // Hvis brugeren ikke har sendt en EndTime (dvs. den er default(DateTime)), sætter vi den til nu + 1 dag
+                if (auction.EndTime == default)
+                {
+                    auction.EndTime = DateTime.UtcNow.AddDays(1);
+                }
 
-                 // 5) Opret selve auktionen i AuctionService-databasen
+                // 5) Opret selve auktionen i AuctionService-databasen
                 await _auctionService.CreateAuction(auction);
 
                 _logger.LogInformation("Auction created successfully for ProductId: {ProductId}", auction.ProductId);
-                return Ok("Auction created successfully.");
+                return Ok("Auction with id: {auction.AuctionId} created successfully.", auction.AuctionId);
             }
             catch (Exception ex)
             {
@@ -65,7 +70,7 @@ namespace AuctionServiceAPI.Controllers
             }
         }
 
-
+        // Hent alle auktioner (tilgængelig for både brugere og administratorer)
         [HttpGet("auctions")]
         [Authorize(Roles = "1, 2")]
         public async Task<IActionResult> GetAuctions()
@@ -83,5 +88,61 @@ namespace AuctionServiceAPI.Controllers
                 return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while fetching auctions.");
             }
         }
+
+        // Hent en specifik auktion (tilgængelig for både brugere og administratorer)
+        [HttpGet("auction/{id}")]
+        [Authorize(Roles = "1, 2")]
+        public async Task<IActionResult> GetAuction(Guid id)
+        {
+            _logger.LogInformation("Fetching auction with ID: {AuctionId}", id);
+            try
+            {
+                var auction = await _auctionService.GetAuction(id);
+                if (auction == null)
+                {
+                    _logger.LogWarning("Auction with ID: {AuctionId} not found.", id);
+                    return NotFound("Auction not found.");
+                }
+
+                _logger.LogInformation("Successfully fetched auction with ID: {AuctionId}", id);
+                return Ok(auction);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error occurred while fetching auction with ID: {AuctionId}", id);
+                return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while fetching the auction.");
+            }
+        }
+
+        // Opdater en auktion (kun tilgængelig for administratorer)
+        // [HttpPut("auction/{id}")]
+        // [Authorize(Roles = "2")]
+        // public async Task<IActionResult> UpdateAuction(Guid id, Auction auction)
+        // {
+        //     if (id != auction.AuctionId)
+        //     {
+        //         _logger.LogWarning("AuctionId in URL does not match AuctionId in body.");
+        //         return BadRequest("AuctionId in URL does not match AuctionId in body.");
+        //     }
+
+        //     _logger.LogInformation("Attempting to update auction with ID: {AuctionId}", id);
+        //     try
+        //     {
+        //         var updated = await _auctionService.UpdateAuction(auction);
+        //         if (!updated)
+        //         {
+        //             _logger.LogWarning("Auction with ID: {AuctionId} not found.", id);
+        //             return NotFound("Auction not found.");
+        //         }
+
+        //         _logger.LogInformation("Auction with ID: {AuctionId} updated successfully.", id);
+        //         return Ok("Auction with ID: {AuctionId} updated successfully.", id);
+        //     }
+        //     catch (Exception ex)
+        //     {
+        //         _logger.LogError(ex, "Error occurred while updating auction with ID: {AuctionId}", id);
+        //         return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while updating the auction.");
+        //     }
+        // }
     }
 }
