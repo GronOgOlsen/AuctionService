@@ -42,10 +42,18 @@ namespace AuctionServiceAPI.Services
                 return false;
             }
 
+            // Hvis auktionen er afsluttet eller mislykket, kan der ikke bydes
+            if (auction.Status == "Completed" || auction.Status == "Failed")
+            {
+                return false;
+            }
+
+            // Find det højeste bud, hvis der er nogen
             var highestBid = auction.Bids?.Count > 0
                 ? auction.Bids.Max(b => b.Amount)
                 : auction.StartingPrice;
 
+            // Hvis det nye bud er mindre end eller lig med det højeste bud, afvises det
             if (bid.Amount <= highestBid)
             {
                 return false;
