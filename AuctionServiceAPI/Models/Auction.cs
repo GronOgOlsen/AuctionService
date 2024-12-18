@@ -30,6 +30,6 @@ namespace AuctionServiceAPI.Models
 
         public User Seller { get; set; }
 
-        public string Status { get; set; } 
+        public string? Status { get; set; } // Active, Sold, FailedAuction, bliver automatisk sat til Active ved oprettelse
     }
 }

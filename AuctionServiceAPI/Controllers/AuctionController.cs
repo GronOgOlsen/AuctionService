@@ -49,8 +49,9 @@ namespace AuctionServiceAPI.Controllers
         }
 
 
-        // Henter alle aktive auktioner (tilgængelig for alle, da vores bidding-service henter dem for fejlhåndtering)
+        // Henter alle aktive auktioner (tilgængelig for både brugere og administratorer)
         [HttpGet("active-auctions")]
+        [Authorize(Roles = "1, 2")]
         public async Task<IActionResult> GetActiveAuctions()
         {
             _logger.LogInformation("Fetching list of active auctions...");
@@ -86,9 +87,8 @@ namespace AuctionServiceAPI.Controllers
             }
         }
 
-        // Henter en specifik auktion (tilgængelig for både brugere og administratorer)
+        // Henter en specifik auktion (tilgængelig for alle da biddingservie skal kunne hente auktioner)
         [HttpGet("{id}")]
-        [Authorize(Roles = "1, 2")]
         public async Task<IActionResult> GetAuctionById(Guid id)
         {
             _logger.LogInformation("Fetching auction with ID: {AuctionId}", id);
