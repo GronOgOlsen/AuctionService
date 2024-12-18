@@ -11,5 +11,7 @@ namespace AuctionServiceAPI.Interfaces
          Task SetProductInAuctionAsync(Guid productId, Guid auctionId);
          Task<bool> SetProductStatusToSoldAsync(Guid productId);
          Task<bool> SetProductStatusToFailedAuctionAsync(Guid productId);
+         //Bruges kun hvis en auktion slettes
+         Task<bool> SetProductStatusToAvailableAsync(Guid productId);
     }
 }

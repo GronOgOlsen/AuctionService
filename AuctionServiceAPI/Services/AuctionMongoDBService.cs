@@ -18,10 +18,37 @@ namespace AuctionServiceAPI.Services
             _catalogService = catalogService;
         }
 
-        public async Task CreateAuction(Auction auction)
+        public async Task<Guid> CreateAuctionAsync(Auction auction)
         {
+            // Henter produktet
+            var product = await _catalogService.GetAvailableProductAsync(auction.ProductId);
+            if (product == null)
+            {
+                throw new ArgumentException("The product does not exist, or has not yet been set to available by admin");
+            }
+
+            // Genererer AuctionId, hvis det ikke allerede er sat
+            if (auction.AuctionId == Guid.Empty)
+                auction.AuctionId = Guid.NewGuid();
+
+            // Opdaterer produkt-status i CatalogService
+            await _catalogService.SetProductInAuctionAsync(auction.ProductId, auction.AuctionId);
+
+            // Sætter auktionens start-, sluttid, status og produkt
+            auction.Product = product;
+            auction.Status = "Active";
+            auction.Bids = new List<Bid>();
+            auction.StartTime = DateTime.UtcNow;
+
+            if (auction.EndTime == default)
+                auction.EndTime = DateTime.UtcNow.AddDays(1);
+
+            // Opretter auktionen i databasen
             await _auctions.InsertOneAsync(auction);
+
+            return auction.AuctionId; // Returnerer Guid
         }
+
 
         public async Task<List<Auction>> GetAuctions()
         {
@@ -31,6 +58,16 @@ namespace AuctionServiceAPI.Services
         public async Task<Auction> GetAuctionById(Guid auctionId)
         {
             return await _auctions.Find(a => a.AuctionId == auctionId).FirstOrDefaultAsync();
+        }
+
+        public async Task<List<Auction>> GetActiveAuctions()
+        {
+            return await _auctions.Find(a => a.Status == "Active").ToListAsync();
+        }
+
+        public async Task DeleteAuction(Guid auctionId)
+        {
+            await _auctions.DeleteOneAsync(a => a.AuctionId == auctionId);
         }
 
         public async Task<bool> ProcessBidAsync(Bid bid)
