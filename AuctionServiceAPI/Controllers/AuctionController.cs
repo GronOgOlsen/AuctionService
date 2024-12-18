@@ -13,13 +13,11 @@ namespace AuctionServiceAPI.Controllers
     public class AuctionController : ControllerBase
     {
         private readonly IAuctionService _auctionService;
-        private readonly ICatalogService _catalogService;
         private readonly ILogger<AuctionController> _logger;
 
-        public AuctionController(IAuctionService auctionService, ICatalogService catalogService, ILogger<AuctionController> logger)
+        public AuctionController(IAuctionService auctionService, ILogger<AuctionController> logger)
         {
             _auctionService = auctionService;
-            _catalogService = catalogService;
             _logger = logger;
         }
 
@@ -117,23 +115,19 @@ namespace AuctionServiceAPI.Controllers
         public async Task<IActionResult> DeleteAuction(Guid id)
         {
             _logger.LogInformation("Attempting to delete auction with ID: {AuctionId}", id);
+
             try
             {
-                var auction = await _auctionService.GetAuctionById(id);
-                if (auction == null)
+                var result = await _auctionService.DeleteAuctionAsync(id);
+
+                if (result.Contains("successfully"))
                 {
-                    _logger.LogWarning("Auction with ID: {AuctionId} not found.", id);
-                    return NotFound("Auction not found.");
+                    _logger.LogInformation(result);
+                    return Ok(result);
                 }
 
-                // 1) Slet auktionen fra AuctionService-databasen
-                await _auctionService.DeleteAuction(id);
-
-                // 2) Opdater produkt-status i CatalogService 
-                await _catalogService.SetProductStatusToAvailableAsync(auction.ProductId);
-
-                _logger.LogInformation("Auction with ID: {AuctionId} deleted successfully.", id);
-                return Ok("Auction deleted successfully.");
+                _logger.LogWarning(result);
+                return NotFound(result);
             }
             catch (Exception ex)
             {
@@ -141,7 +135,6 @@ namespace AuctionServiceAPI.Controllers
                 return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while deleting the auction.");
             }
         }
-
 
         [HttpGet("version")]
         public async Task<Dictionary<string, string>> GetVersion()

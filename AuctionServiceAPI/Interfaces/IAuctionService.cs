@@ -10,7 +10,7 @@ namespace AuctionServiceAPI.Interfaces
         Task<List<Auction>> GetAuctions();
         Task<Auction> GetAuctionById(Guid auctionId);
         Task<List<Auction>> GetActiveAuctions();
-        Task DeleteAuction(Guid auctionId);
+        Task<string> DeleteAuctionAsync(Guid auctionId);
         Task<bool> ProcessBidAsync(Bid bid);
         Task<List<Auction>> GetExpiredAuctionsAsync();
         Task EndAuctionAsync(Auction auction);

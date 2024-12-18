@@ -65,43 +65,37 @@ namespace AuctionServiceAPI.Services
             return await _auctions.Find(a => a.Status == "Active").ToListAsync();
         }
 
-        public async Task DeleteAuction(Guid auctionId)
+        public async Task<string> DeleteAuctionAsync(Guid auctionId)
         {
+            // 1. Hent auktionen for at få fat i ProductId
+            var auction = await GetAuctionById(auctionId);
+            if (auction == null)
+            {
+                return "Auction not found.";
+            }
+
+            // 2. Slet auktionen fra databasen (ingen behov for at tjekke DeletedCount)
             await _auctions.DeleteOneAsync(a => a.AuctionId == auctionId);
+
+            // 3. Opdater produktstatus i CatalogService til "Available"
+            var productUpdated = await _catalogService.SetProductStatusToAvailableAsync(auction.ProductId);
+            if (!productUpdated)
+            {
+                return "Auction deleted, but failed to update product status.";
+            }
+
+            return $"Auction with ID: {auctionId} deleted successfully.";
         }
 
         public async Task<bool> ProcessBidAsync(Bid bid)
         {
-            var auction = await _auctions.Find(a => a.AuctionId == bid.AuctionId).FirstOrDefaultAsync();
+            // Bygger en opdaterings-definition, som tilføjer det nye bud til Bids-listen i auktionen.
+            var update = Builders<Auction>.Update.Push(a => a.Bids, bid);
 
-            if (auction == null)
-            {
-                return false;
-            }
-
-            // Hvis auktionen er afsluttet eller mislykket, kan der ikke bydes
-            if (auction.Status == "Completed" || auction.Status == "Failed")
-            {
-                return false;
-            }
-
-            // Find det højeste bud, hvis der er nogen
-            var highestBid = auction.Bids?.Count > 0
-                ? auction.Bids.Max(b => b.Amount)
-                : auction.StartingPrice;
-
-            // Hvis det nye bud er mindre end eller lig med det højeste bud, afvises det
-            if (bid.Amount <= highestBid)
-            {
-                return false;
-            }
-
-            auction.Bids ??= new List<Bid>();
-            auction.Bids.Add(bid);
-
-            var updateResult = await _auctions.ReplaceOneAsync(
+            // Opdaterer auktionen i databasen
+            var updateResult = await _auctions.UpdateOneAsync(
                 a => a.AuctionId == bid.AuctionId,
-                auction
+                update
             );
 
             return updateResult.ModifiedCount > 0;
