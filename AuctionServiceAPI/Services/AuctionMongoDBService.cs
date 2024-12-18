@@ -49,7 +49,6 @@ namespace AuctionServiceAPI.Services
             return auction.AuctionId; // Returnerer Guid
         }
 
-
         public async Task<List<Auction>> GetAuctions()
         {
             return await _auctions.Find(_ => true).ToListAsync();
@@ -63,6 +62,12 @@ namespace AuctionServiceAPI.Services
         public async Task<List<Auction>> GetActiveAuctions()
         {
             return await _auctions.Find(a => a.Status == "Active").ToListAsync();
+        }
+
+        public async Task<List<Auction>> GetExpiredAuctionsAsync()
+        {
+            var now = DateTime.UtcNow;
+            return await _auctions.Find(a => a.EndTime <= now && a.Status == "Active").ToListAsync();
         }
 
         public async Task<string> DeleteAuctionAsync(Guid auctionId)
@@ -99,12 +104,6 @@ namespace AuctionServiceAPI.Services
             );
 
             return updateResult.ModifiedCount > 0;
-        }
-
-        public async Task<List<Auction>> GetExpiredAuctionsAsync()
-        {
-            var now = DateTime.UtcNow;
-            return await _auctions.Find(a => a.EndTime <= now && a.Status == "Active").ToListAsync();
         }
 
         public async Task EndAuctionAsync(Auction auction)

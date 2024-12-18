@@ -82,7 +82,7 @@ namespace AuctionServiceAPI.Services
         public async Task<bool> SetProductStatusToAvailableAsync(Guid productId)
         {
             _logger.LogInformation("Setting ProductId: {ProductId} status to 'Available'.", productId);
-            var response = await _httpClient.PutAsync($"product/{productId}/prepare-auction", null);
+            var response = await _httpClient.PutAsync($"api/catalog/product/{productId}/prepare-auction", null);
 
             if (response.IsSuccessStatusCode)
             {
