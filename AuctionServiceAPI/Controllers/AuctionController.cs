@@ -32,9 +32,9 @@ namespace AuctionServiceAPI.Controllers
 
             try
             {
-                var auctionId = await _auctionService.CreateAuctionAsync(auction); 
+                var auctionId = await _auctionService.CreateAuctionAsync(auction);
                 _logger.LogInformation("Auction created successfully with AuctionId: {AuctionId}", auctionId);
-                return Ok($"Auction with id: {auctionId} created successfully."); 
+                return Ok($"Auction with id: {auctionId} created successfully.");
             }
             catch (ArgumentException ex)
             {
@@ -49,9 +49,8 @@ namespace AuctionServiceAPI.Controllers
         }
 
 
-        // Henter alle aktive auktioner (tilgængelig for både brugere og administratorer)
+        // Henter alle aktive auktioner (tilgængelig for alle, da vores bidding-service henter dem for fejlhåndtering)
         [HttpGet("active-auctions")]
-        [Authorize(Roles = "1, 2")]
         public async Task<IActionResult> GetActiveAuctions()
         {
             _logger.LogInformation("Fetching list of active auctions...");
@@ -142,7 +141,7 @@ namespace AuctionServiceAPI.Controllers
                 return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while deleting the auction.");
             }
         }
-       
+
 
         [HttpGet("version")]
         public async Task<Dictionary<string, string>> GetVersion()
