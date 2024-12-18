@@ -1,36 +1,73 @@
 {
-    "$schema": "http://json-schema.org/draft-07/schema#",
-    "type": "object",
-    "properties": {
-      "auctionId": {
-        "type": "integer",
-        "description": "Auction ID."
-      },
-      "item": {
-        "type": "object",
-        "properties": {
-        }
-      },
-      "startTime": {
-        "type": "string",
-        "format": "date-time",
-        "description": "Auction start time."
-      },
-      "endTime": {
-        "type": "string",
-        "format": "date-time",
-        "description": "Auction end time."
-      },
-      "bids": {
-        "type": "array",
-        "items": {
-          "type": "object",
-          "properties": {
-          }
-        },
-        "description": "List of bids."
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://example.com/auction.schema.json",
+  "title": "Auction",
+  "type": "object",
+  "properties": {
+    "AuctionId": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Unik identifier for auktionen som en GUID."
+    },
+    "ProductId": {
+      "type": "string",
+      "format": "uuid",
+      "description": "ID for det produkt, der er til salg i auktionen."
+    },
+    "Product": {
+      "type": "object",
+      "description": "Det fulde produktobjekt, hentes fra CatalogService.",
+      "additionalProperties": true
+    },
+    "StartingPrice": {
+      "type": "number",
+      "description": "Startprisen for auktionen."
+    },
+    "ValuedAt": {
+      "type": "number",
+      "description": "Vurderet værdi af produktet."
+    },
+    "Bids": {
+      "type": "array",
+      "description": "Liste over bud i auktionen.",
+      "items": {
+        "$ref": "https://example.com/bid.schema.json"
       }
     },
-    "required": ["auctionId", "item", "startTime", "endTime", "bids"]
-  }
-  
+    "WinningBid": {
+      "type": "object",
+      "description": "Det vindende bud for auktionen.",
+      "additionalProperties": true
+    },
+    "StartTime": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Tidspunkt for auktionens start."
+    },
+    "EndTime": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Tidspunkt for auktionens afslutning."
+    },
+    "Seller": {
+      "type": "object",
+      "description": "Information om sælgeren af produktet.",
+      "additionalProperties": true
+    },
+    "Status": {
+      "type": "string",
+      "description": "Status for auktionen (f.eks. Pending, Active, Completed)."
+    }
+  },
+  "required": [
+    "AuctionId",
+    "ProductId",
+    "StartingPrice",
+    "ValuedAt",
+    "StartTime",
+    "EndTime",
+    "Seller",
+    "Status"
+  ],
+  "additionalProperties": false
+}
